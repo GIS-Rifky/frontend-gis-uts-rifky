@@ -202,7 +202,7 @@ map.on(L.Draw.Event.DELETED, async (e)=> {
     showSpinner(true);
     for (const id of dels) {
       const r = await fetch(`${API_BASE}/features/${id}`, { method:"DELETE" });
-      if (!r.ok) { const txt = await r.text().catch(()=> ""); throw new Error(`HTTP ${r.status} ${r.statusText}${txt?': '+txt:''}`); }
+      if (!r.ok) { const txt = await r.text().catch(()=> ""); throw new Error(`HTTP ${res.status} ${res.statusText}${txt?': '+txt:''}`); }
     }
     showToast("Deleted"); await renderServerFeaturesBBox();
   } catch (err) { console.error(err); showToast("Delete error: "+err.message,3500); } finally { showSpinner(false); }
@@ -252,26 +252,68 @@ function openInlineEdit(id, layer) {
   }, 0);
 }
 
-/* ---------------- Modal prompt for create ---------------- */
+/* ---------------- Modal prompt for create (improved) ---------------- */
 function promptNameDesc(prefillName = "", prefillDesc = "") {
-  return new Promise((resolve)=> {
-    const overlay = document.createElement("div"); overlay.className = "modal-overlay";
-    const box = document.createElement("div"); box.className = "modal-box";
-    box.innerHTML = `<div style="font-weight:600;margin-bottom:6px;font-size:16px">Isi informasi</div>
-      <input id="modal-name" placeholder="Name" value="${escapeHtml(prefillName)}" />
-      <textarea id="modal-desc" placeholder="Description" style="min-height:90px">${escapeHtml(prefillDesc)}</textarea>
-      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px">
-        <button id="modal-cancel" class="btn secondary">Cancel</button>
-        <button id="modal-save" class="btn">Save</button>
-      </div>`;
-    overlay.appendChild(box); document.body.appendChild(overlay);
-    const nameInput = document.getElementById("modal-name"); setTimeout(()=> nameInput && nameInput.focus(),60);
-    document.getElementById("modal-cancel").onclick = ()=> { overlay.remove(); resolve(null); };
-    document.getElementById("modal-save").onclick = ()=> {
-      const name = document.getElementById("modal-name").value; const description = document.getElementById("modal-desc").value;
-      overlay.remove(); resolve({ name: name? String(name).trim() : "", description: description? String(description).trim() : ""});
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+
+    const box = document.createElement("div");
+    box.className = "modal-box";
+
+    box.innerHTML = `
+      <div class="modal-title">Isi informasi</div>
+      <form id="modal-form" autocomplete="off">
+        <input id="modal-name" name="name" type="text" placeholder="Name" value="${escapeHtml(prefillName)}" />
+        <textarea id="modal-desc" name="description" placeholder="Description">${escapeHtml(prefillDesc)}</textarea>
+        <div class="modal-actions">
+          <button type="button" id="modal-cancel" class="btn secondary">Cancel</button>
+          <button type="submit" id="modal-save" class="btn">Save</button>
+        </div>
+      </form>
+    `;
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    const form = document.getElementById("modal-form");
+    const nameInput = document.getElementById("modal-name");
+    const descInput = document.getElementById("modal-desc");
+    const cancelBtn = document.getElementById("modal-cancel");
+
+    // autofocus safely
+    setTimeout(() => { nameInput && nameInput.focus(); }, 60);
+
+    // Cancel handler
+    cancelBtn.onclick = () => {
+      overlay.remove();
+      resolve(null);
     };
-    nameInput.addEventListener("keydown", (ev)=> { if (ev.key === "Enter") { ev.preventDefault(); document.getElementById("modal-save").click(); } });
+
+    // Submit handler
+    form.onsubmit = async (ev) => {
+      ev.preventDefault();
+      const name = (nameInput.value || "").trim();
+      const description = (descInput.value || "").trim();
+      if (!name) {
+        // small inline validation
+        nameInput.focus();
+        nameInput.style.borderColor = "#ef4444";
+        setTimeout(() => nameInput.style.borderColor = "#e3e8ef", 1200);
+        return;
+      }
+      overlay.remove();
+      resolve({ name, description });
+    };
+
+    // close on ESC
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        overlay.remove();
+        resolve(null);
+      }
+    };
+    document.addEventListener("keydown", onKey, { once: true });
   });
 }
 
@@ -498,7 +540,8 @@ document.getElementById("import-file")?.addEventListener("change", async (ev)=> 
   const f = ev.target.files[0]; if (!f) return; const txt = await f.text();
   try {
     const obj = JSON.parse(txt); const feats = obj.type === "FeatureCollection" && Array.isArray(obj.features) ? obj.features : null;
-    if (!feats) { showToast("File bukan FeatureCollection"); return; }
+    if (!feats) { showToast("File bukan FeatureCollection"); return;
+    }
     if (!confirm(`Import ${feats.length} features?`)) return;
     showSpinner(true);
     for (const feat of feats) {
