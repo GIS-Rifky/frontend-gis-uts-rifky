@@ -134,8 +134,8 @@
   <script>
     (function(){
       const q = new URLSearchParams(window.location.search).get("api");
-      window.API_BASE = q || "http://localhost:3000";
-      document.getElementById("api-url").textContent = window.API_BASE;
+      window.API_BASE = q || "https://backend-gis-uts-rifky-production.up.railway.app";
+      try { document.getElementById("api-url").textContent = window.API_BASE; } catch(e){}
     })();
   </script>
 
