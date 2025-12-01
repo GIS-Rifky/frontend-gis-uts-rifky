@@ -20,6 +20,7 @@
       --accent:#0b63c6;
       font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto;
     }
+
     html,body{height:100%; margin:0; background:var(--bg); color:#0b1724}
     .topbar{
       height:64px; display:flex; align-items:center; gap:12px; padding:0 16px;
@@ -87,7 +88,6 @@
       font-family: inherit;
     }
 
-    /* modal content layout */
     .modal-box .modal-title {
       font-weight: 700;
       margin-bottom: 10px;
@@ -143,6 +143,28 @@
       outline-offset: 2px;
     }
 
+    /* Inline popup buttons (for Leaflet popup / inline edit) */
+    .btn-inline-action {
+      background: linear-gradient(180deg, #1E88E5, #1976d2);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-inline-secondary {
+      background: white;
+      color: var(--blue);
+      border: 1px solid #cdd8e3;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
     /* toast/spinner */
     #toast { position: fixed; right:20px; bottom:20px; display:flex; flex-direction:column; gap:8px; z-index:20000; }
     .toast{ background:#05223b; color:white; padding:10px 14px; border-radius:8px; box-shadow:0 6px 20px rgba(7,18,34,.24); }
@@ -169,7 +191,7 @@
         Import GeoJSON <input id="import-file" type="file" accept=".json,.geojson" style="display:none">
       </label>
     </div>
-    <!-- <div class="top-right">API: <span id="api-url">http://localhost:3000</span></div> -->
+    <!-- optional debug: <div class="top-right">API: <span id="api-url">http://localhost:3000</span></div> -->
   </div>
 
   <div class="layout">
